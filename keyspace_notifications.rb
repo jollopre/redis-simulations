@@ -3,12 +3,13 @@ require 'redis'
 module RedisSimulations
   class KeyspaceNotifications
     SIGINT = 'SIGINT'.freeze
+    SIGTERM = 'SIGTERM'.freeze
     EXPIRED_PATTERN = '__keyevent@0__:expired'.freeze
 
     class << self
       def do
         create_keys
-        sigint_handler
+        signals_handler
         message_before_subscribing_to_expired_keys
         subscribe_to_expired_keys
       end
@@ -24,10 +25,10 @@ module RedisSimulations
         @redis ||= Redis.new(host: 'redis')
       end
 
-      def sigint_handler
-        Signal.trap(SIGINT) do
-          abort "Terminating subscription to #{EXPIRED_PATTERN}"
-        end
+      def signals_handler
+        handler = Proc.new { abort "Unsubscribed from #{EXPIRED_PATTERN}" }
+        Signal.trap(SIGINT, &handler)
+        Signal.trap(SIGTERM, &handler)
       end
 
       def message_before_subscribing_to_expired_keys

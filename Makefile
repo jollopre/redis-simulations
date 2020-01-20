@@ -1,6 +1,6 @@
 .PHONY: down console out_of_memory events
 down:
-	docker-compose down
+	docker-compose down --remove-orphans 2> /dev/null
 console:
 	docker-compose run --rm ruby bash
 out_of_memory:
